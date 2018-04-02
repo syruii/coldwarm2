@@ -1,0 +1,7 @@
+{
+  "name": "Coolwarm",
+  "version": "0.0.1",
+  "dependencies": {
+    "color-convert": "^1.9.1"
+  }
+}
