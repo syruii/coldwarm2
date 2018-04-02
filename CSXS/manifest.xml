@@ -24,6 +24,10 @@
                 <Resources>
                     <MainPath>./index.html</MainPath>
                     <ScriptPath>./host/ps.jsx</ScriptPath>
+                    <CEFCommandLine>
+                        <Parameter>--enable-nodejs</Parameter>
+                        <Parameter>--mixed-context</Parameter>
+                    </CEFCommandLine>
                 </Resources>
                 <UI>
                     <Type>Panel</Type>

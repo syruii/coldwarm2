@@ -9,8 +9,8 @@ var fgcolor = "#000000";
 var colors;
 
 // global variables that should be read from settings file
-// fidelity is how much rows and columns are in the grid layout
-var fidelity = 7;
+// Settings.rawQuantity is how much rows and columns are in the grid layout
+
 
 
 // generic callback
@@ -35,7 +35,7 @@ function onLoaded() {
         // do rest of initialisation that depends on updated fgcolor
         fgcolor = `#${data}`;
         initColorsVectors();
-        colorSquares();
+        refreshColors();
     })
 }
 
@@ -98,22 +98,32 @@ function PhotoshopCallbackUnique(csEvent) {
 
             // no type coercion on switch statement
             var col = eventDataParse.eventData.to;
+            var convert = cep_node.require('color-convert');
             if (col) {
                 switch (col._obj) {
                     case "HSBColorClass":
-                        fgcolor = colorsys.hsvToHex(col.hue._value.col.saturation, col.brightness);
+                        var rgb = convert.hsl.rgb(col.hue._value, col.saturation, col.brightness);
+                        fgcolor = convert.rgb.hex(rgb);
                         break;
                     case "RGBColor":
-                        fgcolor = colorsys.rgbToHex(col.red, col.grain, col.blue);
+                        fgcolor = convert.rgb.hex(col.red, col.grain, col.blue);
                         break;
                     case "CMYKColorClass":
-                        var rgb = colorsys.cmyk2rgb(col.cyan, col.magenta, col.yellowColor, col.black);
-                        fgcolor = colorsys.rgbToHex(rgb);
+                        var rgb = convert.cmyk.rgb(col.cyan, col.magenta, col.yellowColor, col.black);
+                        fgcolor = convert.rgb.hex(rgb);
                         break;
                     case "labColor":
+                        var xyz = convert.lab.xyz.raw(col.luminance, col.a, col.b);
+                        var rgb = convert.xyz.rgb(xyz);
+                        fgcolor = convert.rgb.hex(rgb);
+                        break;
+                    default:
+                        JSLogIt("PhotoshopCallbackUnique received unexpected value for color obj" + col._obj);
                 }
+                fgcolor = '#' + fgcolor;
+                refresh();
+                //$(`.square-grid > div:nth-child(1)`).css("background-color", fgcolor);
             }
-            $(`.square-grid > div:nth-child(1)`).css("background-color", `#${fgcolor}`);
         } else {
             JSLogIt("PhotoshopCallbackUnique expecting string for csEvent.data!");
         }
@@ -128,15 +138,31 @@ function JSLogIt(inMessage) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Color calculation functions
+// Grid panel functions
 ///////////////////////////////////////////////////////////////////////////////
+var Settings = {
+    showSaturation: true,
+    tempStepDistance: 12,
+    lumaStepDistance: 12,
+    oneSideQuantity: 3,
+    rawQuantity: 7
+}
+
+
+// recalculates color panels and saturation
+function refresh() {
+    refreshColors();
+    if (Settings.showSaturation) {
+        refreshSaturation();
+    }
+}
 
 // populates color vector
 function initColorsVectors() {
-    colors = new Array(fidelity);
-    for (var i = 0; i < fidelity; i++) {
-        colors[i] = new Array(fidelity);
-        for (var j = 0; j < fidelity; j++) {
+    colors = new Array(Settings.rawQuantity);
+    for (var i = 0; i < Settings.rawQuantity; i++) {
+        colors[i] = new Array(Settings.rawQuantity);
+        for (var j = 0; j < Settings.rawQuantity; j++) {
             colors[i][j] = fgcolor;
         }
     }
@@ -145,11 +171,34 @@ function initColorsVectors() {
 // replaces bg color of squares with the colors contained in the color array
 function colorSquares() {
     var childNum;
-    for (var i = 0; i < fidelity; i++) {
-        for (var j = 0; j < fidelity; j++) {
-            childNum = (fidelity * i) + j + 1;
+    for (var i = 0; i < Settings.rawQuantity; i++) {
+        for (var j = 0; j < Settings.rawQuantity; j++) {
+            childNum = (Settings.rawQuantity * i) + j + 1;
             $(`.square-grid > div:nth-child(${childNum})`).css("background-color", colors[i][j]);
         }
     }
 }
 
+// calculates new colors and places them into the array
+function refreshColors() {
+    var currentTemp = - (Settings.tempStepDistance * Settings.oneSideQuantity);
+    var currentLightness = (Settings.lumaStepDistance * Settings.oneSideQuantity);
+    var convert = require('color-convert');
+    for (var i = 0; i < Settings.rawQuantity; i++) {
+        for (var j = 0; j < Settings.rawQuantity; j++) {
+            colors[j][i] = '#' + convert.rgb.hex(
+                getWarmerColorBrightnessFix(
+                    addToAllChannels(convert.hex.rgb.raw(fgcolor), currentLightness),
+                    currentTemp)
+                );
+            currentLightness -= Settings.lumaStepDistance;
+        }
+        currentTemp += Settings.tempStepDistance;
+        currentLightness = (Settings.lumaStepDistance * Settings.oneSideQuantity);
+    }
+    colorSquares();
+}
+
+function refreshSaturation() {
+    //todo
+}
