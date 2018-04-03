@@ -74,6 +74,59 @@ function gam_sRGB(v) {
     return Math.round(v*255);
 }
 
+function saturationMove(rgb, value) {
+    return _saturationMove(rgb, value, false);
+}
+
+function saturationMoveHSB(rgb, value) {
+    return _saturationMove(rgb, value, true);
+}
+
+// esoteric to me
+// DRY
+function _saturationMove(color, value, hsb) {
+    var rgb = color.slice();
+    var red = 0;
+    var green = 1;
+    var blue = 2;
+
+    var isGray = (rgb[red] === rgb[green] && rgb[red] === rgb[blue] && rgb[green] === rgb[blue]);
+    var isSaturationMax = (rgb[red] === 0 || rgb[blue] === 0 || rgb[green] === 0) && value > 0;
+
+    if (isGray || isSaturationMax || value === 0) {
+        return rgb;
+    } else {
+        if (value > 1) { value = 1; }
+        else if (value < -1) { value = -1; }
+    }
+
+    var h = (rgb[red] > rgb[green]) ? red : green;
+    h = (rgb[h] > rgb[blue]) ? h : blue;
+
+    var l = (rgb[red] < rgb[green]) ? red : green;
+    l = (rgb[l] > rgb[blue]) ? blue : l;
+
+    var m = (rgb[red] > rgb[green] && rgb[red] < rgb[blue]) || (rgb[red] > rgb[blue] && rgb[red] < rgb[green]) ? red
+        : ((rgb[green] > rgb[red] && rgb[green] < rgb[blue]) || (rgb[green] > rgb[blue] && rgb[green] < rgb[red])) ? green : blue;
+
+    if (value > 0) {
+        rgb[m] -= (rgb[h] - rgb[m]) / (rgb[h] - rgb[l]) * rgb[l] * value;
+        rgb[l] -= rgb[l] * value;
+    } else {
+        if (hsb) {
+            rgb[m] += (rgb[h] - rgb[m]) * -value;
+            rgb[l] += (rgb[h] - rgb[l]) * -value;
+        } else {
+            var medium = getLumaGray(rgb);
+            rgb[l] += (rgb[l] - medium) * value;
+            rgb[m] += (rgb[m] - medium) * value;
+            rgb[h] += (rgb[h] - medium) * value;
+        }
+    }
+
+    return rgb;
+}
+
 function compareTwoColors24(colorOne, colorTwo) {
     //todo
     // var red = getRed24(colorOne) - getRed24(colorB);

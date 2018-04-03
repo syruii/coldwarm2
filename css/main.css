@@ -96,30 +96,37 @@ textarea {
 /* ==========================================================================
    Author's custom styles
    ========================================================================== */
+:root {
+    /* The content width you use on your website */
+    --temp-content-width: 85.75vw;
+    --sat-content-width: 12.25vw;
+    /* The size of the gutter */
+    --gutter: 0px;
+
+    /* The amount of columns */
+    --temp-columns: 7;
+    --sat-columns: 1;
 
 
-.square-grid{
-/* The content width you use on your website */
---content-width: 85.75vw;
-/* The size of the gutter */
---gutter: 0px;
+    /* This is the calculation for the row height. */
+    --temp-row-size: calc(
+        ( var(--temp-content-width) - (var(--gutter) * (var(--temp-columns) - 1))
+        ) / var(--temp-columns)
+    );
+    --sat-row-size: calc(
+        ( var(--sat-content-width) - (var(--gutter) * (var(--sat-columns) - 1))
+        ) / var(--sat-columns)
+    );
+}
 
-/* The amount of columns */
---columns: 7;
-
-/* This is the calculation for the row height. */
---row-size: calc(
-( var(--content-width) - (var(--gutter) * (var(--columns) - 1))
-) / var(--columns)
-);
-
+.temperature-grid{
     display: grid;
 
     width: 100%;
-    max-width: var(--content-width);
+    max-width: var(--temp-content-width);
 
-    grid-template-columns: repeat(var(--columns), 1fr);
-    grid-auto-rows: var(--row-size);
+    grid-template-columns: repeat(var(--temp-columns), 1fr);
+    grid-auto-rows: var(--temp-row-size);
 
     grid-column-gap: var(--gutter);
     grid-row-gap: var(--gutter);
@@ -133,28 +140,14 @@ textarea {
     padding: 0.5vw;
 }
 
-.value-grid-container{
-    /* The content width you use on your website */
-    --content-width: 12.25vw;
-    /* The size of the gutter */
-    --gutter: 0px;
-
-    /* The amount of columns */
-    --columns: 1;
-
-    /* This is the calculation for the row height. */
-    --row-size: calc(
-        ( var(--content-width) - (var(--gutter) * (var(--columns) - 1))
-        ) / var(--columns)
-    );
-
+.saturation-grid{
     display: grid;
 
     width: 100%;
-    max-width: var(--content-width);
+    max-width: var(--sat-content-width);
 
-    grid-template-columns: repeat(var(--columns), 1fr);
-    grid-auto-rows: var(--row-size);
+    grid-template-columns: repeat(var(--sat-columns), 1fr);
+    grid-auto-rows: var(--sat-row-size);
 
     grid-column-gap: var(--gutter);
     grid-row-gap: var(--gutter);
@@ -163,6 +156,18 @@ textarea {
     background-color: rgba(133, 133, 133, 0.8);
     font-size: 30px;
     text-align: center;
+}
+
+/* Border is 1/80th of the square size
+ * Might need to be changed if saturation becomes non square
+ * if it uses a different class
+ */
+.grid-item:hover {
+    border-style: solid;
+    border-color: whitesmoke;
+    border-width: calc(
+        var(--temp-row-size) / 80
+    );
 }
 
 /* ==========================================================================

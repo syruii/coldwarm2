@@ -7,14 +7,24 @@ var gExtensionID = cs.getExtensionID();
 
 var fgcolor = "#000000";
 var colors;
+var saturationColors;
 
 // global variables that should be read from settings file
 // Settings.rawQuantity is how much rows and columns are in the grid layout
+
+var flyoutXML = '\
+<Menu> \
+	<MenuItem Id="configure" Label="Configure" Enabled="true" Checked="false"/> \
+	\
+</Menu>';
+
 
 
 
 // generic callback
 cs.addEventListener("com.adobe.PhotoshopJSONCallback" + gExtensionID, PhotoshopCallbackUnique);
+// callback for flyout
+cs.addEventListener("com.adobe.csxs.events.flyoutMenuClicked", flyoutMenuHandler)
 
 function onLoaded() {
     //　テーマを初期設定
@@ -29,13 +39,15 @@ function onLoaded() {
         }
     }
     Register(true, eventSet.toString());
+    cs.setPanelFlyoutMenu(flyoutXML);
 
     // get fgcolor from tool
     cs.evalScript("getForegroundColor()", function (data) {
         // do rest of initialisation that depends on updated fgcolor
         fgcolor = `#${data}`;
         initColorsVectors();
-        refreshColors();
+        initSaturationVectors();
+        refresh();
     })
 }
 
@@ -86,6 +98,11 @@ function Register(inOn, inEvents) {
     cs.dispatchEvent(event);
 }
 
+
+function flyoutMenuHandler(flyoutEvent) {
+    JSLogIt('configure');
+}
+
 function PhotoshopCallbackUnique(csEvent) {
     try {
         if (typeof csEvent.data === "string") {
@@ -122,7 +139,6 @@ function PhotoshopCallbackUnique(csEvent) {
                 }
                 fgcolor = '#' + fgcolor;
                 refresh();
-                //$(`.square-grid > div:nth-child(1)`).css("background-color", fgcolor);
             }
         } else {
             JSLogIt("PhotoshopCallbackUnique expecting string for csEvent.data!");
@@ -144,6 +160,10 @@ var Settings = {
     showSaturation: true,
     tempStepDistance: 12,
     lumaStepDistance: 12,
+    saturationMaxStep: 1,
+    saturationRawDistanceMin: 2,
+    saturationRawDistanceMax: 8,
+    saturationHSB: false,
     oneSideQuantity: 3,
     rawQuantity: 7
 }
@@ -168,14 +188,27 @@ function initColorsVectors() {
     }
 }
 
+function initSaturationVectors() {
+    saturationColors = new Array(Settings.rawQuantity);
+    for (var i = 0; i < Settings.rawQuantity; i++) {
+        saturationColors[i] = fgcolor;
+    }
+}
+
 // replaces bg color of squares with the colors contained in the color array
 function colorSquares() {
     var childNum;
     for (var i = 0; i < Settings.rawQuantity; i++) {
         for (var j = 0; j < Settings.rawQuantity; j++) {
             childNum = (Settings.rawQuantity * i) + j + 1;
-            $(`.square-grid > div:nth-child(${childNum})`).css("background-color", colors[i][j]);
+            $(`.temperature-grid > div:nth-child(${childNum})`).css("background-color", colors[i][j]);
         }
+    }
+}
+
+function colorSaturation() {
+    for (var i = 0; i < Settings.rawQuantity; i++) {
+        $(`.saturation-grid > div:nth-child(${i + 1})`).css("background-color", saturationColors[i]);
     }
 }
 
@@ -183,12 +216,13 @@ function colorSquares() {
 function refreshColors() {
     var currentTemp = - (Settings.tempStepDistance * Settings.oneSideQuantity);
     var currentLightness = (Settings.lumaStepDistance * Settings.oneSideQuantity);
-    var convert = require('color-convert');
+    var convert = require('color-convert')
+    var foregroundColor = convert.hex.rgb(fgcolor);
     for (var i = 0; i < Settings.rawQuantity; i++) {
         for (var j = 0; j < Settings.rawQuantity; j++) {
             colors[j][i] = '#' + convert.rgb.hex(
                 getWarmerColorBrightnessFix(
-                    addToAllChannels(convert.hex.rgb.raw(fgcolor), currentLightness),
+                    addToAllChannels(foregroundColor, currentLightness),
                     currentTemp)
                 );
             currentLightness -= Settings.lumaStepDistance;
@@ -200,5 +234,38 @@ function refreshColors() {
 }
 
 function refreshSaturation() {
-    //todo
+    var currentSaturationStep = Settings.saturationMaxStep;
+    var saturationDecreaseStep = (Settings.saturationMaxStep / Settings.oneSideQuantity);
+    var convert = require('color-convert')
+    var foregroundColor = convert.hex.rgb(fgcolor);
+
+    for (var i = 0; i < Settings.rawQuantity; i++) {
+        if (Settings.saturationHSB) {
+            saturationColors[i] = '#' + convert.rgb.hex(
+                saturationMoveHSB(foregroundColor, currentSaturationStep)
+                );
+        } else {
+            saturationColors[i] = '#' + convert.rgb.hex(
+                saturationMove(foregroundColor, currentSaturationStep)
+            );
+        }
+        currentSaturationStep -= saturationDecreaseStep;
+    }
+    colorSaturation();
+}
+
+// set click event for nth child in square grid
+$('.temperature-grid').on('click', '> *', setColorFromCSS);
+
+// set click event for nth children in saturation grid
+$('.saturation-grid').on('click', '> *', setColorFromCSS);
+
+function setColorFromCSS(e) {
+    // set color and refresh
+    // kind of hacky, extract rgb directly from css
+    var colorString = e.target.style.backgroundColor;
+    if (colorString) {
+        var rgb = colorString.match(/\d+/g);
+        cs.evalScript(`setForegroundColorRGB(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`, refresh)
+    }
 }

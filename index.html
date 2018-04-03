@@ -8,10 +8,13 @@
         <link rel="stylesheet" type="text/css" href="css/topcoat-desktop-dark.css" id="topcoat-style" >
         <link rel="stylesheet" href="css/main.css">
     </head>
-    <body onload="onLoaded()">
-        <!-- Add your site or application content here -->
+    <body onload="onLoaded()" oncontextmenu="return false;">
+        <div id="optionsOverlay" class="overlay">
+            <ahref ="javascript:void(0)" class="closebtn" onclick
+        </div>
+
         <div class="grid-container">
-            <div class="square-grid">
+            <div class="temperature-grid">
                 <div class="grid-item"></div>
                 <div class="grid-item"></div>
                 <div class="grid-item"></div>
@@ -62,7 +65,7 @@
                 <div class="grid-item"></div>
                 <div class="grid-item"></div>
             </div>
-            <div class="value-grid-container">
+            <div class="saturation-grid">
                 <div class="grid-item"></div>
                 <div class="grid-item"></div>
                 <div class="grid-item"></div>
