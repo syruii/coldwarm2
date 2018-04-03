@@ -1,6 +1,5 @@
 // some events we are interested in
 var eventSet = 1936028772; // "setd"
-
 // reference to CSInterface object
 var cs = new CSInterface();
 var gExtensionID = cs.getExtensionID();
@@ -18,10 +17,11 @@ var flyoutXML = '\
 	\
 </Menu>';
 
-
-
+var settingsShown = false;
 
 // generic callback
+
+cs.addEventListener("com.adobe.csxs.events.ThemeColorChanged", setAppTheme);
 cs.addEventListener("com.adobe.PhotoshopJSONCallback" + gExtensionID, PhotoshopCallbackUnique);
 // callback for flyout
 cs.addEventListener("com.adobe.csxs.events.flyoutMenuClicked", flyoutMenuHandler)
@@ -41,6 +41,11 @@ function onLoaded() {
     Register(true, eventSet.toString());
     cs.setPanelFlyoutMenu(flyoutXML);
 
+    // set settings
+    $('#saturation').val(Settings.saturationMaxStep * 10);
+    $('#temperature').val(Settings.tempStepDistance);
+    $('#luminance').val(Settings.lumaStepDistance);
+
     // get fgcolor from tool
     cs.evalScript("getForegroundColor()", function (data) {
         // do rest of initialisation that depends on updated fgcolor
@@ -59,10 +64,10 @@ function setAppTheme(e) {
     var hostEnv = window.__adobe_cep__.getHostEnvironment();
     var skinInfo = JSON.parse(hostEnv).appSkinInfo;
     var color = skinInfo.panelBackgroundColor.color;
-    var avg = (color.red + color.blue + color.green) / 3;
+    //var avg = (color.red + color.blue + color.green) / 3;
     // bg色の平均が128を超えるかどうかによってCSSを適用する：
-    var type = (avg > 128) ? "light" : "dark";
-    document.getElementById("topcoat-style").href = "css/topcoat-desktop-" + type + ".css";
+    //var type = (avg > 128) ? "light" : "dark";
+    //document.getElementById("topcoat-style").href = "css/topcoat-desktop-" + type + ".css";
     // パネルの body のbg色をツールに合わせる：
     var rgb = "rgb(" +
         Math.round(color.red) + "," +
@@ -98,11 +103,6 @@ function Register(inOn, inEvents) {
     cs.dispatchEvent(event);
 }
 
-
-function flyoutMenuHandler(flyoutEvent) {
-    JSLogIt('configure');
-}
-
 function PhotoshopCallbackUnique(csEvent) {
     try {
         if (typeof csEvent.data === "string") {
@@ -134,8 +134,8 @@ function PhotoshopCallbackUnique(csEvent) {
                         var rgb = convert.xyz.rgb(xyz);
                         fgcolor = convert.rgb.hex(rgb);
                         break;
-                    default:
-                        JSLogIt("PhotoshopCallbackUnique received unexpected value for color obj" + col._obj);
+                    //default:
+                        //JSLogIt("PhotoshopCallbackUnique received unexpected value for color obj" + col._obj);
                 }
                 fgcolor = '#' + fgcolor;
                 refresh();
@@ -269,3 +269,120 @@ function setColorFromCSS(e) {
         cs.evalScript(`setForegroundColorRGB(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`, refresh)
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// Setting panel functions
+///////////////////////////////////////////////////////////////////////////////
+
+function openSettings() {
+    document.getElementById("optionsOverlay").style.height = "100%";
+}
+
+function closeSettings() {
+    document.getElementById("optionsOverlay").style.height = "0%";
+}
+
+
+function flyoutMenuHandler(flyoutEvent) {
+    switch (flyoutEvent.data.menuId) {
+        case "configure":
+            settingsShown = !settingsShown;
+            cs.updatePanelMenuItem("Configure", true, settingsShown);
+            if (settingsShown) {
+                openSettings();
+            } else {
+                closeSettings();
+            }
+    }
+}
+
+function changeTemperature(inc) {
+    if (inc) {
+        document.getElementById("temperature").stepUp();
+    } else {
+        document.getElementById("temperature").stepDown();
+    }
+    var temp = $("#temperature").val();
+    if (Settings.tempStepDistance != temp) {
+        Settings.tempStepDistance = Number(temp);
+        refreshColors();
+    }
+}
+
+function checkTemperature(e) {
+    if ($(this).val() > 20
+        && e.keyCode !== 46 // keycode for delete
+        && e.keyCode !== 8 // keycode for backspace
+    ) {
+        e.preventDefault();
+        $(this).val(20);
+    }
+    var temp = $(this).val();
+    if (Settings.tempStepDistance != temp) {
+        Settings.tempStepDistance = Number(temp);
+        refreshColors();
+    }
+}
+
+function changeLuminance(inc) {
+    if (inc) {
+        document.getElementById("luminance").stepUp();
+    } else {
+        document.getElementById("luminance").stepDown();
+    }
+    var temp = $("#luminance").val();
+    if (Settings.lumapStepDistance != temp) {
+        Settings.lumaStepDistance = Number(temp);
+        refreshColors();
+    }
+}
+
+function checkLuminance(e) {
+    if ($(this).val() > 20
+        && e.keyCode !== 46 // keycode for delete
+        && e.keyCode !== 8 // keycode for backspace
+    ) {
+        e.preventDefault();
+        $(this).val(20);
+    }
+    var temp = $(this).val();
+    if (Settings.lumaStepDistance != temp) {
+        Settings.lumaStepDistance = Number(temp);
+        refreshColors();
+    }
+}
+
+function changeSaturation(inc) {
+    if (inc) {
+        document.getElementById("saturation").stepUp();
+    } else {
+        document.getElementById("saturation").stepDown();
+    }
+    var temp = $("#saturation").val() / 10;
+    if (Settings.saturationMaxStep != temp) {
+        Settings.saturationMaxStep = Number(temp);
+        refreshSaturation();
+    }
+}
+
+function checkSaturation(e) {
+    if ($(this).val() > 10
+        && e.keyCode !== 46 // keycode for delete
+        && e.keyCode !== 8 // keycode for backspace
+    ) {
+        e.preventDefault();
+        $(this).val(10);
+    }
+    var temp = $(this).val() / 10;
+    if (Settings.saturationMaxStep != temp) {
+        Settings.saturationMaxStep = Number(temp);
+        refreshSaturation();
+    }
+}
+
+
+//todo: dynamically added div squares must propogate higher
+$(document.body).on('paste keydown keyup', '#temperature', checkTemperature);
+$(document.body).on('paste keydown keyup', '#luminance', checkLuminance);
+$(document.body).on('paste keydown keyup', '#saturation', checkSaturation);
+

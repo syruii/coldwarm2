@@ -7,10 +7,54 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" type="text/css" href="css/topcoat-desktop-dark.css" id="topcoat-style" >
         <link rel="stylesheet" href="css/main.css">
+        <link rel="stylesheet" href="css/bootstrap.min.css">
     </head>
-    <body onload="onLoaded()" oncontextmenu="return false;">
+    <body onselectstart='return false;' onload="onLoaded()" oncontextmenu="return false;">
         <div id="optionsOverlay" class="overlay">
-            <ahref ="javascript:void(0)" class="closebtn" onclick
+            <div class="overlay-content">
+                <div class="settings-grid">
+                    <div class="settings-list">
+                        <div class="setting">Temperature step </div>
+                        <div class="setting">Luminance step</div>
+                        <div class="setting">Saturation max step</div>
+                    </div>
+                    <div class="settings-list">
+                        <div class="setting">
+                            <div class="number-input">
+                                <button onclick="changeTemperature(false)">
+                                    <span class="centered">-</span>
+                                </button>
+                                <input id="temperature" min="0" max="20" step="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" name="temperature" type="number">
+                                <button onclick="changeTemperature(true)">
+                                    <span class="centered">+</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="setting">
+                            <div class="number-input">
+                                <button onclick="changeLuminance(false)" >
+                                    <span class="centered">-</span>
+                                </button>
+                                <input id="luminance" min="0" max="20" step="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" name="luminance"  type="number">
+                                <button onclick="changeLuminance(true)">
+                                    <span class="centered">+</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="setting">
+                            <div class="number-input">
+                                <button onclick="changeSaturation(false)" >
+                                    <span class="centered">-</span>
+                                </button>
+                                <input id="saturation" min="0" max="10" onkeypress="return event.charCode >= 48 && event.charCode <= 57" name="saturation"  type="number">
+                                <button onclick="changeSaturation(true)">
+                                    <span class="centered">+</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="grid-container">
