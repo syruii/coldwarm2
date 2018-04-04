@@ -83,6 +83,20 @@ textarea {
 }
 
 /* ==========================================================================
+   Top-coat
+   ========================================================================== */
+
+body {
+    margin: 0;
+    padding: 0;
+    background: #4b4d4e;
+    color: #000;
+    font: 16px "Source Sans", helvetica, arial, sans-serif;
+    font-weight: 400;
+}
+
+
+/* ==========================================================================
    Browser Upgrade Prompt
    ========================================================================== */
 
@@ -106,6 +120,7 @@ textarea {
     /* The amount of columns */
     --temp-columns: 7;
     --sat-columns: 1;
+    --sat-rows: 7;
 
 
     /* This is the calculation for the row height. */
@@ -113,10 +128,7 @@ textarea {
         ( var(--temp-content-width) - (var(--gutter) * (var(--temp-columns) - 1))
         ) / var(--temp-columns)
     );
-    --sat-row-size: calc(
-        ( var(--sat-content-width) - (var(--gutter) * (var(--sat-columns) - 1))
-        ) / var(--sat-columns)
-    );
+    --sat-row-size: calc( var(--temp-content-width) / var(--sat-rows) );
 }
 
 .temperature-grid{
@@ -132,12 +144,20 @@ textarea {
     grid-row-gap: var(--gutter);
 }
 
+.grid-container-single {
+    display: grid;
+    grid-template-columns: auto;
+    grid-gap: 1vw;
+    padding: 0.5vw;
+    overflow-y: hidden;
+}
 
-.grid-container {
+.grid-container-dual {
     display: grid;
     grid-template-columns: 7fr 1fr;
     grid-gap: 1vw;
     padding: 0.5vw;
+    overflow-y: hidden;
 }
 
 
@@ -147,12 +167,13 @@ textarea {
     width: 100%;
     max-width: var(--sat-content-width);
 
-    grid-template-columns: repeat(var(--sat-columns), 1fr);
+    grid-template-columns: 1fr;
     grid-auto-rows: var(--sat-row-size);
 
     grid-column-gap: var(--gutter);
     grid-row-gap: var(--gutter);
 }
+
 .grid-item {
     background-color: rgba(133, 133, 133, 0.8);
     font-size: 30px;
@@ -287,7 +308,6 @@ input[type=number]::-webkit-outer-spin-button {
 button span{
     position: relative;
 }
-
 
 
 /* ==========================================================================
