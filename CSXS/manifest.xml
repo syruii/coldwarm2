@@ -46,14 +46,12 @@
 							<Width>320</Width>
                         </MinSize>
                     </Geometry>
-                    <!--
 					<Icons>
-						<Icon Type="Normal"		 >./icons/icon_light.png</Icon>
-						<Icon Type="RollOver"	 >./icons/icon_light_over.png</Icon>
-						<Icon Type="DarkNormal"	 >./icons/icon_dark.png</Icon>
-						<Icon Type="DarkRollOver">./icons/icon_dark_over.png</Icon>
+						<Icon Type="Normal"		 >./assets/Icon.png</Icon>
+						<Icon Type="RollOver"	 >./assets/Icon.png</Icon>
+						<Icon Type="DarkNormal"	 >./assets/IconDark.png</Icon>
+						<Icon Type="DarkRollOver">./assets/IconDark.png</Icon>
                     </Icons>
-                    -->
                 </UI>
             </DispatchInfo>
         </Extension>

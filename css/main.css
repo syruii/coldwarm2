@@ -288,7 +288,10 @@ input[type=number]::-webkit-outer-spin-button {
     left: 50%;
     transform: translate(-50%, -50%);
     font-family: monospace;
-    text-align: center
+    text-align: center;
+    color: #c3c3c3;
+    font-size: 6vw;
+    font-weight: bold;
 }
 
 .number-input input[type=number] {
@@ -300,7 +303,7 @@ input[type=number]::-webkit-outer-spin-button {
     border: solid #ddd;
     border-width: 0 2px;
     font-size: 6vw;
-    height: 6vw;
+    height: 3vw;
     text-align: center;
     color: #3e3e3e;
     background-color: #e5e5e5;
@@ -405,9 +408,9 @@ button span{
 }
 
 @media print,
-       (-webkit-min-device-pixel-ratio: 1.25),
-       (min-resolution: 1.25dppx),
-       (min-resolution: 120dpi) {
+(-webkit-min-device-pixel-ratio: 1.25),
+(min-resolution: 1.25dppx),
+(min-resolution: 120dpi) {
     /* Style adjustments for high resolution devices */
 }
 

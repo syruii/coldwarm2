@@ -1,5 +1,6 @@
 // some events we are interested in
-var eventSet = 1936028772; // "setd"
+let eventSet = 1936028772; // "setd"
+let eventExch = 1165517672;
 // reference to CSInterface object
 var cs = new CSInterface();
 var gExtensionID = cs.getExtensionID();
@@ -11,7 +12,7 @@ var saturationColors;
 // global variables that should be read from settings file
 // Settings.rawQuantity is how much rows and columns are in the grid layout
 
-var flyoutXML = '\
+let flyoutXML = '\
 <Menu> \
 	<MenuItem Id="configure" Label="Configure" Enabled="true" Checked="false"/> \
 	<MenuItem Label="---" /> \
@@ -26,17 +27,17 @@ cs.addEventListener("com.adobe.PhotoshopJSONCallback" + gExtensionID, PhotoshopC
 // keydown callback
 cs.addEventListener('keydown', keyListener);
 // callback for flyout
-cs.addEventListener("com.adobe.csxs.events.flyoutMenuClicked", flyoutMenuHandler)
+cs.addEventListener("com.adobe.csxs.events.flyoutMenuClicked", flyoutMenuHandler);
 
 function onLoaded() {
     //　テーマを初期設定
     setAppTheme(null);
-    Persistent(false);
+    Persistent(true);
     //　テーマが変わった時のイベントに登録
-    cs, addEventListener(CSInterface.THEME_COLOR_CHANGED_EVENT, setAppTheme);
-    // 'r' 押下されると page reload
+    cs.addEventListener(CSInterface.THEME_COLOR_CHANGED_EVENT, setAppTheme);
 
     Register(true, eventSet.toString());
+    Register(true, eventExch.toString());
     cs.setPanelFlyoutMenu(flyoutXML);
 
     // set settings
@@ -55,8 +56,8 @@ function onLoaded() {
     })
 }
 
-// set PS panel persistence
 
+// テーマを設定
 function setAppTheme(e) {
     // この例ではイベントオブジェクト(e)は不要。
     // テーマ情報をCSInterfaceから取得：
@@ -103,6 +104,7 @@ function Register(inOn, inEvents) {
 }
 
 function PhotoshopCallbackUnique(csEvent) {
+    debug = csEvent;
     if (typeof csEvent.data === "string") {
         // color changed
         // check if color differs from our calculated centre color
@@ -113,7 +115,7 @@ function PhotoshopCallbackUnique(csEvent) {
 
         // no type coercion on switch statement
         var col = eventDataParse.eventData.to;
-        var convert = cep_node.require('color-convert');
+        var convert = require('color-convert');
         var newfg;
         if (col) {
             switch (col._obj) {
@@ -141,22 +143,27 @@ function PhotoshopCallbackUnique(csEvent) {
                 fgcolor = newfg;
                 refresh();
             }
+        } else {
+            // exchange fg so get new one
+            cs.evalScript("getForegroundColor()", function (data) {
+                fgcolor = `#${data}`;
+                refresh();
+            })
         }
     }
 }
 
-
 // log errors
+/*
 function JSLogIt(inMessage) {
     cs.evalScript("LogIt('" + inMessage + "')");
-}
+} */
 
 ///////////////////////////////////////////////////////////////////////////////
 // Key Listener & Storage
 ///////////////////////////////////////////////////////////////////////////////
 
 cs.registerKeyEventsInterest(JSON.stringify([
-    { "keyCode": 82},
     { "keyCode": 83},
     { "keyCode": 81},
     { "keyCode": 81, "shiftKey": true},
@@ -169,9 +176,6 @@ window.addEventListener('keydown', keyListener);
 // listen to key inputs when in focus
 function keyListener(e) {
     switch (e.key.toLowerCase()) {
-        case "r":
-            window.location.reload();
-            break;
         case "s":
             Settings.showSaturation =  !Settings.showSaturation;
             toggleSaturation();
@@ -201,7 +205,6 @@ function keyListener(e) {
         case "e":
             if (e.shiftKey) {
                 // increase saturation panels
-                JSLogIt('or here');
                 if (Settings.rawSaturationQuantity < Settings.maxSaturationQuantity) {
                     Settings.oneSideSaturationQuantity++;
                     Settings.rawSaturationQuantity = (Settings.oneSideSaturationQuantity * 2) + 1;
@@ -221,7 +224,7 @@ function keyListener(e) {
             }
             break;
     }
-    saveSettings();
+    //saveSettings();
 }
 
 var Settings = {
@@ -250,6 +253,10 @@ function loadSettings() {
     document.documentElement.style.setProperty('--temp-columns', `${Settings.rawQuantity}`);
     document.documentElement.style.setProperty('--sat-rows', `${Settings.rawSaturationQuantity}`);
     cs.updatePanelMenuItem("HSB Saturation", true, Settings.saturationHSB);
+
+    if (window.localStorage.width && window.localStorage.height) {
+        window.__adobe_cep__.resizeContent(window.localStorage.width, window.localStorage.height);
+    }
 }
 
 function saveSettings() {
@@ -257,9 +264,14 @@ function saveSettings() {
     window.localStorage.tempStepDistance = Settings.tempStepDistance;
     window.localStorage.lumaStepDistance = Settings.lumaStepDistance;
     window.localStorage.saturationMaxStep = Settings.saturationMaxStep;
+    window.localStorage.saturationHSB = Settings.saturationHSB;
 
     window.localStorage.oneSideQuantity = Settings.oneSideQuantity;
     window.localStorage.oneSideSaturationQuantity = Settings.oneSideSaturationQuantity;
+
+
+    window.localStorage.width = window.innerWidth;
+    window.localStorage.height = window.innerHeight;
 }
 
 
@@ -418,7 +430,7 @@ function flyoutMenuHandler(flyoutEvent) {
         case "hsbFlag":
             Settings.saturationHSB = !Settings.saturationHSB;
             cs.updatePanelMenuItem("HSB Saturation", true, Settings.saturationHSB);
-            saveSettings();
+            //saveSettings();
             refreshSaturation();
             break;
     }
